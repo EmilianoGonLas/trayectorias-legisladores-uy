@@ -1,0 +1,8 @@
+# HTML crudo de la fuente: se baja con scripts/01_listado.py y 02_fichas.py, no se versiona
+data/raw/
+__pycache__/
+*.pyc
+.Rhistory
+.RData
+.Rproj.user/
+rsconnect/
