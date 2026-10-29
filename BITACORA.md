@@ -53,6 +53,10 @@ Biografías de Legisladores, Biblioteca del Poder Legislativo.
    y se extraen `desde`/`hasta`; un año solo queda con `hasta` nulo. No se asume que
    «2025» significa «2025–2025» (es una decisión de análisis, no de parseo).
 9. **Hay cargos sin partido** en la tarjeta (`( - Titular)`): huecos de la fuente, no del parser.
+10. **Hay años imposibles.** Un premio de la ficha 2036 figura en «1006» (casi seguro 1906). Estiraba el eje de
+    la línea de vida a ~900 años y rompía el cálculo de la escala. El parser lo registra como `anio_inverosimil`
+    (fuera de 1750–2100) y la app deja esos registros fuera de la línea (siguen en las tablas, con aviso).
+    Se encontró probando la lógica de la app contra las 1.816 personas, no a mano.
 
 ## 4. Decisiones de diseño
 
@@ -100,9 +104,9 @@ posteriores a 1940 con circunscripción y los 13 diputados sin ella son para rev
 71 están en los 2200 y llegan hasta el 2297; el resto está disperso. Son registros que están en la
 base y no se pueden mostrar. No sabemos quiénes son (ver §6).
 
-**Anomalías (84):** 82 cargos de la tarjeta sin partido (`( - Titular)`; es la fuente, la ficha
+**Anomalías (85):** 82 cargos de la tarjeta sin partido (`( - Titular)`; es la fuente, la ficha
 dice lo mismo) y 2 lugares de nacimiento en el extranjero con comas dentro del nombre del país
-(ids 1579 y 2087; el texto crudo está en `lugar_nacimiento_raw`).
+(ids 1579 y 2087; el texto crudo está en `lugar_nacimiento_raw`) y 1 año inverosímil (id 2036, ver §3.10).
 
 ### Cobertura despareja por época (leer antes de comparar períodos)
 

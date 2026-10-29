@@ -8,6 +8,11 @@ pct <- function(x) paste0(formatC(100 * x, format = "f", digits = 1, decimal.mar
 
 ANIO_ACTUAL <- as.integer(format(Sys.Date(), "%Y"))
 
+# Un año es verosímil entre 1750 y el año que viene. La fuente trae algún error de tipeo (un premio
+# fechado en «1006», id 2036): estirar el eje 900 años por eso rompe la línea, así que esos registros
+# se dejan fuera de la línea (siguen en las tablas) y se avisa.
+anio_ok <- function(x) !is.na(x) & x >= 1750 & x <= ANIO_ACTUAL + 1
+
 # ---- piezas de texto -----------------------------------------------------------------------------
 persona_link <- function(id, texto) tags$a(href = "#", class = "plink", `data-persona` = id, texto)
 
@@ -52,7 +57,7 @@ linea_tiempo <- function(cp, tp, grupos) {
                    ifelse(is.na(cp$sublema), "", paste0(" — sublema: ", cp$sublema)),
                    ifelse(is.na(cp$lista), "", paste0(" — lista ", cp$lista))))
   }
-  tp <- tp[tp$seccion %in% grupos & !is.na(tp$desde), , drop = FALSE]
+  tp <- tp[tp$seccion %in% grupos & anio_ok(tp$desde), , drop = FALSE]
   if (nrow(tp)) {
     ev$otros <- data.frame(
       grupo = tp$seccion, desde = tp$desde, hasta = ifelse(tp$en_actividad, ANIO_ACTUAL, tp$hasta),
@@ -67,10 +72,13 @@ linea_tiempo <- function(cp, tp, grupos) {
   if (!length(ev)) return(tags$p(class = "vacio", "No hay cargos con año para mostrar en esta línea."))
   ev <- do.call(rbind, ev)
   ev$rot[is.na(ev$rot)] <- "(sin descripción)"
-  ev$hasta[is.na(ev$hasta) | ev$hasta < ev$desde] <- ev$desde[is.na(ev$hasta) | ev$hasta < ev$desde]
+  mal <- !anio_ok(ev$hasta) | ev$hasta < ev$desde          # sin «hasta» o con uno imposible: un solo año
+  ev$hasta[mal] <- ev$desde[mal]
 
   lo <- min(ev$desde); hi <- max(ev$hasta); span <- hi - lo + 1
-  paso <- c(1, 2, 5, 10, 20, 25, 50)[which(span / c(1, 2, 5, 10, 20, 25, 50) <= 9)[1]]
+  pasos <- c(1, 2, 5, 10, 20, 25, 50, 100, 200)
+  paso <- pasos[which(span / pasos <= 9)[1]]
+  if (is.na(paso)) paso <- 200
   marcas <- seq(ceiling(lo / paso) * paso, hi, by = paso)
   est <- sprintf("--gp:%.3f%%;--gs:%.3f%%", (marcas[1] - lo) / span * 100, paso / span * 100)
   if (!length(marcas)) est <- "--gp:0%;--gs:100%"

@@ -141,13 +141,13 @@ server <- function(input, output, session) {
 
   output$linea <- renderUI({
     cp <- CP(); tp <- TP(); gr <- input$grupos %||% character()
-    sin <- sum(tp$seccion %in% gr & is.na(tp$desde))
+    sin <- sum(tp$seccion %in% gr & !anio_ok(tp$desde))
     card(card_body(
       linea_tiempo(cp, tp, gr),
       if (nrow(cp)) leyenda_lemas(cp$ranura, nombre_ranura(cp$ranura)),
       div(class = "tenue", "Barras de color: cargos parlamentarios, según el lema. Barras grises: lo demás. ",
           "Los puntos son hechos de un solo año.",
-          if (sin) sprintf(" %d registro%s sin año aparece%s sólo en las tablas.", sin, if (sin > 1) "s" else "", if (sin > 1) "n" else ""))))
+          if (sin) sprintf(" %d registro%s sin año (o con un año imposible en la fuente) aparece%s sólo en las tablas.", sin, if (sin > 1) "s" else "", if (sin > 1) "n" else ""))))
   })
 
   output$detalle <- renderUI({

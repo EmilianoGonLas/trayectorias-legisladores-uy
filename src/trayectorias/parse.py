@@ -313,6 +313,10 @@ def parse_ficha(html: str, id_: int) -> dict:
                 anom.append((tabla, "fila_una_celda", f["lineas_raw"][:200]))
             if f["periodo_raro"]:
                 anom.append((tabla, "periodo_raro", f["periodo_raw"]))
+            for anio in (f["desde"], f["hasta"]):
+                if anio is not None and not 1750 <= anio <= 2100:
+                    anom.append((tabla, "anio_inverosimil", f"{f['periodo_raw']} — {f['lineas_raw'][:120]}"))
+                    break
             if tabla == "cargos_legislativos":
                 f.update(_cargo_legislativo(f))
                 if f["_otros"] > 2:

@@ -40,7 +40,7 @@ fuente no se versiona (`data/raw/`, unos 70 MB); se vuelve a bajar con los scrip
 | `legislaturas`, `lemas` | 50 · 25 | Catálogos tomados del formulario de la fuente. |
 | `listado_cargos` | 4.786 | Los cargos tal como los muestra la tarjeta del listado: sirve sólo para validar. |
 | `ids_estado` | 2.399 | Resultado de cada ID sondeado, incluidos los 170 que la fuente no deja consultar. |
-| `anomalias` | 84 | Todo lo que el parseo no pudo interpretar. |
+| `anomalias` | 85 | Todo lo que el parseo no pudo interpretar. |
 
 Cada fila de texto conserva `lineas_raw`, el texto tal cual salió de la fuente, para auditar cualquier
 interpretación. Los períodos vienen en `periodo_raw` y se separan en `desde` / `hasta`: un año solo queda con
