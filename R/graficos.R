@@ -202,10 +202,12 @@ matriz_lemas <- function(tr) {
 # Los cambios más frecuentes, como ranking: se lee mejor que la matriz completa.
 transiciones_top <- function(tr, k = 12) {
   d <- head(tr[order(-tr$n, tr$de, tr$a), ], k); mx <- max(d$n)
-  punto <- function(l) tags$i(class = paste("pto", cl_lema(match(l, meta$slots_nombre, nomatch = 9L))))
+  # Cada lema (punto + nombre) va en un bloque que no se parte: si el rótulo no entra en una línea, se corta en la
+  # flecha y no deja el punto de color huérfano al final de la primera línea.
+  lema_bloque <- function(l) HTML(paste0('<span class="lm"><i class="pto ', cl_lema(match(l, meta$slots_nombre, nomatch = 9L)), '"></i> ', esc(l), "</span>"))
   tags$div(class = "bh bh-ancho", lapply(seq_len(nrow(d)), function(i)
     tags$div(class = "fila-bh",
-      tags$span(class = "et", punto(d$de[i]), " ", d$de[i], " → ", punto(d$a[i]), " ", d$a[i]),
+      tags$span(class = "et", lema_bloque(d$de[i]), " → ", lema_bloque(d$a[i])),
       tags$span(class = "pista-bh", tags$i(style = sprintf("width:%.3f%%", d$n[i] / mx * 100),
                 title = sprintf("De %s a %s: %d cambios", d$de[i], d$a[i], d$n[i]))),
       tags$span(class = "val", d$n[i]))))

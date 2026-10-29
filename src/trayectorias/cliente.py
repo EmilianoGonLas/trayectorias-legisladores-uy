@@ -1,6 +1,6 @@
 """Cliente HTTP para el Sistema de Consultas de Biografías de Legisladores.
 
-Lo que hay que saber de la fuente (verificado el 2026-10-28, ver BITACORA.md):
+Lo que hay que saber de la fuente (verificado el 2026-10-28, ver docs/BITACORA.md):
 
 * El HTTP/2 del servidor está roto: devuelve 200 con cuerpo vacío. `requests`
   habla HTTP/1.1, así que no hace falta forzar nada, pero no migrar a `httpx`

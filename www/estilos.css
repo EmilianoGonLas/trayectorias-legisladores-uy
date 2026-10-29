@@ -93,7 +93,8 @@ a.plink:hover { text-decoration-color: var(--tinta); }
 .bh .et { color: var(--tinta2); }
 .bh .pista-bh i { display: block; height: 12px; background: var(--tinta2); opacity: .8; border-radius: 0 4px 4px 0; min-width: 2px; }
 .bh-ancho .fila-bh { grid-template-columns: minmax(12rem, 24rem) 1fr 3rem; }
-.bh-ancho .et { display: flex; flex-wrap: wrap; align-items: center; gap: 0 .3rem; color: var(--tinta); }
+.bh-ancho .et { color: var(--tinta); }
+.bh-ancho .lm { white-space: nowrap; }
 .bh .val { font-variant-numeric: tabular-nums; text-align: right; }
 
 /* ---------- matrices (secuencial en un solo tono) ---------- */

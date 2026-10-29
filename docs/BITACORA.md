@@ -262,3 +262,29 @@ La primera publicación **cargaba pero no mostraba datos**. Lo que costó entend
 - **El panel integrado del navegador, oculto, frena los temporizadores de Shiny** y da falsos «se colgó». Medir
   rendimiento en un navegador visible.
 - **Con Shiny en `app.R`, `global.R` no se ejecuta solo:** hace falta `source("global.R")`.
+
+## 9. Revisión y limpieza del repositorio público (2026-10-29)
+
+Auditoría de lo publicado (árbol y **todas** las revisiones): sin secretos, sin rutas locales, sin nada versionado
+que hoy esté ignorado. Lo único que mencionaba «secret» es un comentario de advertencia sin valor alguno. Cambios:
+
+- **Se sacó `manifest.json`**: estaba desactualizado en 4 de 5 archivos (`app.R`, `global.R`, `R/graficos.R`,
+  `data/app/datos.rds`); usarlo para publicar desde GitHub habría desplegado una versión vieja. No se usa: la
+  publicación va por `rsconnect::deployApp()`. Si hiciera falta, se genera con `rsconnect::writeManifest()`.
+- **Se sacó `sass-cache/`** (artefacto de compilación que se regenera). `scripts/deploy_cloud.R` lo genera solo si falta.
+- **Se corrigió `scripts/deploy_cloud.R`**: seguía indicando que hay que subir el *idle timeout* a 60 s, que es la
+  hipótesis falsa del §8. Un repo público no debe mandar a nadie por ese camino.
+- **Bitácora movida a `docs/`**; nuevo **diccionario de datos** (`data/README.md`), con todas las columnas de las 14
+  tablas. Al escribirlo se verificó contra los datos y se corrigió una afirmación mía (los senadores con
+  circunscripción son la gran mayoría sólo hasta los años veinte, no hasta 1940).
+- **Capturas en `docs/img/`**, tomadas de la app publicada (Trayectoria en claro, Legislaturas en oscuro, Recorridos y
+  una vista de celular). Las de escritorio salen de un Chrome de 1920 px de ancho; la de celular, de una emulación de
+  375 px, no de un teléfono real. Se eligieron personas fallecidas y de lemas distintos (Batlle Berres, Herrera) para no
+  privilegiar a ningún legislador vivo.
+- Detalle visual corregido al capturar: en el ranking de cambios de lema, un lema de nombre largo dejaba su punto de
+  color huérfano al final de la línea; ahora cada lema es un bloque que no se parte.
+- **GitHub**: se agregó la URL de la app como *homepage*, temas, y se desactivó la wiki (vacía).
+
+**Pendiente, y no es cosa de código:** el repositorio no tiene **licencia** (los datos son de la Biblioteca del Poder
+Legislativo; el código lo define su autor). Y los *commits* llevan el correo institucional configurado en git
+(`@fing.edu.uy`), igual que en los otros repos; cambiarlo exigiría reescribir el historial.

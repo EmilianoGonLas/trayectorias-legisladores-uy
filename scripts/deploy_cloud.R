@@ -3,8 +3,12 @@
 #   rsconnect::connectCloudClientCredentials(clientId=, clientSecret=, accountName="emilianogonlas")
 # NO guardar el clientSecret en el repo. Uso: Rscript scripts/deploy_cloud.R (desde la raíz)
 #
-# Tras publicar por primera vez: Settings -> Runtime -> Idle timeout en 60 s (el valor por defecto, 5 s,
-# mata el worker de R entre el HTML y el websocket y da 503). Ver BITACORA.
+# Si la app publicada carga pero sin datos o con errores, mirar PRIMERO los logs (connect.posit.cloud ->
+# contenido -> Logs). La causa que tuvo acá fue un .rds con vectores de Arrow, no un ajuste de la plataforma:
+# ver docs/BITACORA.md §8.
+# La caché de estilos no se versiona: si falta, se genera (acelera el arranque en frío de la app).
+if (!dir.exists("sass-cache")) source("scripts/precalentar_css.R", encoding = "UTF-8")
+
 rsconnect::deployApp(
   appDir = ".", appPrimaryDoc = "app.R",
   appFiles = c("app.R", "global.R", "R", "www", "sass-cache", "data/app/datos.rds"),

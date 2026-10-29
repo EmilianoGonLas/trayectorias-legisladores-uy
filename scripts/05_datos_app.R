@@ -28,7 +28,7 @@ titulo <- function(x) {
 leg <- rd("legisladores"); cl <- rd("cargos_legislativos"); lg <- rd("legislaturas"); lm <- rd("lemas")
 
 # ---- lemas: nombre oficial y ranura de color (fija por entidad, no por ranking) -----------------
-# Orden validado con scripts de la guía dataviz en claro y oscuro (ver BITACORA §7).
+# Orden validado con scripts de la guía dataviz en claro y oscuro (ver docs/BITACORA.md §7).
 SLOTS <- c("Partido Nacional", "Partido Colorado", "Frente Amplio", "Partido Cabildo Abierto",
            "Partido Independiente", "Nuevo Espacio", "Partido Nacional Independiente",
            "Unión Cívica del Uruguay")

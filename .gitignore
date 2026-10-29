@@ -1,8 +1,14 @@
-# HTML crudo de la fuente: se baja con scripts/01_listado.py y 02_fichas.py, no se versiona
+# HTML crudo de la fuente: se baja con scripts/01_listado.py y 02_fichas.py (unos 70 MB), no se versiona
 data/raw/
+
+# Se regeneran: la caché de estilos (scripts/precalentar_css.R) y el registro local de despliegues
+sass-cache/
+rsconnect/
+manifest.json
+
 __pycache__/
 *.pyc
 .Rhistory
 .RData
 .Rproj.user/
-rsconnect/
+.DS_Store
