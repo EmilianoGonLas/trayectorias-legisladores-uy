@@ -218,3 +218,47 @@ Nacional Independiente → Partido Nacional (9), Colorado → Frente Amplio (8),
 Nacional → Nacional Independiente (7). De las 406 personas con cargo en las dos cámaras, 353 (86,9 %) empezaron
 por Diputados. **No son hallazgos**: describen a quienes llegaron a una banca, con lemas tal como figuran en cada
 cargo, y no dicen nada de afiliaciones, candidaturas ni sectores.
+
+## 8. Publicación en Connect Cloud (sesión 2, 2026-10-29)
+
+**App:** https://emilianogonlas-trayectorias-legisladores-uy.share.connect.posit.cloud/ (URL propia activada en *Settings → URL*; la larga redirige con 307). Contenido
+`01a184e7-9166-fb53-7330-a449eecedffd`, cuenta `emilianogonlas`. Se actualiza con `Rscript scripts/deploy_cloud.R`.
+
+La primera publicación **cargaba pero no mostraba datos**. Lo que costó entenderlo, en orden:
+
+1. **Primera hipótesis: el *idle timeout* de 5 s** (por la experiencia de compras-estatales). **Era falsa.** Se
+   había dado por buena sin leer los logs. No hace falta tocar ese ajuste.
+2. **Causa real, a la vista en los logs de Connect Cloud:** `cannot unserialize ALTVEC object of class
+   'arrow::array_int_vector'`. `datos.rds` se armó leyendo parquet con `arrow`, que devuelve vectores
+   «ALTREP» respaldados por Arrow; guardados en un `.rds` y leídos en un servidor **sin arrow cargado**, vuelven con
+   **longitud cero**: la app arranca «bien» pero con todas las tablas vacías y errores crípticos en cada pestaña
+   (`max(legs$numero)` daba `-Inf`). En local no se veía porque arrow está instalado y se carga solo al leer.
+   - **Arreglo:** `options(arrow.use_altrep = FALSE)` antes de leer, en `scripts/05_datos_app.R`.
+   - **Verificación automática** al final del script: descomprime el `.rds` y falla si encuentra `array_*_vector`.
+     Se comprobó que la verificación *detecta* el archivo roto (el del primer commit) y aprueba el nuevo.
+   - **Guarda de arranque** en `global.R`: si las tablas vienen vacías, la app para con un mensaje claro en vez de
+     arrancar y fallar pestaña por pestaña.
+   - Contenido idéntico antes y después (`all.equal` tabla por tabla): sólo cambió la representación interna.
+3. **Un error de datos aparte** (§3.10): el premio fechado en 1006 de la ficha 2036.
+4. **Lentitud del servidor gratuito:** la pestaña Legislaturas tardaba **12,5 s** (en local, ~0,5 s: unas 25 veces
+   menos CPU). El costo era armar cientos de nodos con `htmltools`. Se reescribió la generación de HTML con
+   cadenas vectorizadas (`paste0` sobre vectores completos): ahora **≤ 6 s** en el servidor, y la batería de
+   pruebas local pasó de 64 s a 17 s. La tabla «Ver como tabla» se calcula sólo al abrirla.
+   - **Cómo se comprobó que no cambió nada:** se generaron 455 salidas (personas, filtros de Legislaturas,
+     casos, búsquedas) con la versión vieja y la nueva, mismos datos y entradas, y se compararon: **0 diferencias
+     estructurales** (posiciones, enlaces, conteos, clases) y las únicas de texto son celdas que la versión vieja
+     mostraba como literal «NA» por error (la nueva las deja vacías).
+   - La comparación encontró un **bug propio**: con un filtro sin personas en una legislatura, `paste0` con un
+     vector vacío emite un `<span>` fantasma en vez de nada. Corregido con una guarda.
+
+### Lecciones (para no repetirlas)
+
+- **Mirar los logs del servidor antes de teorizar.** Se perdió tiempo con una hipótesis que los logs desmentían en
+  la primera línea.
+- **Probar el `.rds` sin las bibliotecas que no estarán en el servidor.** «Anda en mi máquina» no vale para
+  objetos serializados.
+- **Probar la lógica de la app contra todas las personas, sin servidor** (`shiny::testServer`): encontró el bug del
+  año 1006 que ninguna prueba manual habría visto.
+- **El panel integrado del navegador, oculto, frena los temporizadores de Shiny** y da falsos «se colgó». Medir
+  rendimiento en un navegador visible.
+- **Con Shiny en `app.R`, `global.R` no se ejecuta solo:** hace falta `source("global.R")`.

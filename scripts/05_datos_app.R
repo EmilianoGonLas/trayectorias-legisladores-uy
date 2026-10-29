@@ -4,6 +4,11 @@
 # La app arranca en frío en un servidor chico, así que no lee parquet ni carga arrow:
 # todo lo que se puede precalcular se precalcula acá (ver global.R).
 
+# arrow devuelve por defecto vectores «ALTREP» respaldados por Arrow. Guardados en un .rds, el servidor
+# (que no tiene arrow cargado) NO los puede reconstruir y los devuelve con longitud cero: la app
+# arranca pero con todas las tablas vacías. Se apaga ANTES de leer y se verifica al final.
+options(arrow.use_altrep = FALSE)
+
 suppressPackageStartupMessages({
   library(arrow); library(dplyr); library(tidyr); library(stringr)
 })
@@ -159,6 +164,12 @@ meta <- list(
 dir.create("data/app", showWarnings = FALSE, recursive = TRUE)
 saveRDS(list(personas = personas, cargos = cargos, texto = select(texto, -busq) |> mutate(busq = texto$busq),
              legislaturas = lg, meta = meta), "data/app/datos.rds", compress = "xz")
+# Verificación: el .rds no debe llevar huellas de Arrow (ver arriba).
+.bytes <- memDecompress(readBin("data/app/datos.rds", "raw", file.size("data/app/datos.rds")), "xz")
+.txt <- rawToChar(.bytes[.bytes != as.raw(0)])
+stopifnot("datos.rds contiene vectores ALTREP de Arrow: el servidor los leería vacíos" =
+            !grepl("array_[a-z]+_vector", .txt, useBytes = TRUE))
+
 message(sprintf("data/app/datos.rds: %.1f MB | personas %d · cargos %d · texto %d · casos %d",
                 file.size("data/app/datos.rds") / 1e6, nrow(personas), nrow(cargos), nrow(texto), nrow(meta$casos)))
 print(count(meta$casos, tipo)); print(cam_tipo |> count(tipo)); print(cobertura)

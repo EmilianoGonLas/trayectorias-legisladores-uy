@@ -8,7 +8,7 @@ La fuente publica cada biografía como una página web con texto libre. Este rep
 devuelve estructura: **una tabla por tipo de dato**, con una fila por cargo, estudio o actividad y un `id` de
 legislador que las une. Encima hay una **app Shiny** para explorarlas.
 
-**App:** _(se completa al publicarla)_ · **Fuente:** [Sistema de Consultas de Biografías de Legisladores](https://biblioteca.parlamento.gub.uy:8008/biografias/busqueda), Biblioteca del Poder Legislativo.
+**App:** [https://emilianogonlas-trayectorias-legisladores-uy.share.connect.posit.cloud/](https://emilianogonlas-trayectorias-legisladores-uy.share.connect.posit.cloud/) · **Fuente:** [Sistema de Consultas de Biografías de Legisladores](https://biblioteca.parlamento.gub.uy:8008/biografias/busqueda), Biblioteca del Poder Legislativo.
 
 ## La app
 

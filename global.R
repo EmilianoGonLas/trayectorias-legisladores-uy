@@ -17,6 +17,10 @@ D <- readRDS("data/app/datos.rds")
 personas <- D$personas; cargos <- D$cargos; texto <- D$texto; legs <- D$legislaturas; meta <- D$meta
 meta$slots_nombre <- meta$slots
 rm(D)
+# Si el .rds se leyera vacío (p. ej. vectores de Arrow sin el paquete) la app arrancaría «bien» pero sin
+# datos y con errores crípticos en cada pestaña. Mejor parar acá con un mensaje claro.
+stopifnot("datos.rds vacío o ilegible: regenerar con scripts/05_datos_app.R" =
+            nrow(personas) > 1000, nrow(cargos) > 4000, nrow(texto) > 20000, nrow(legs) == 50)
 
 URL_REPO <- "https://github.com/EmilianoGonLas/trayectorias-legisladores-uy"
 URL_FUENTE <- "https://biblioteca.parlamento.gub.uy:8008/biografias/busqueda"

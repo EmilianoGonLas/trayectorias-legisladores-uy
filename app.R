@@ -47,7 +47,7 @@ ui <- page_navbar(
       radioButtons("cond", "Condición registrada", c("Todas", "Titular", "Suplente"), inline = TRUE),
       radioButtons("vista", "Mostrar", c("Personas" = "n", "Proporción" = "p"), inline = TRUE)),
     card(card_body(uiOutput("graf_leg"), uiOutput("ley_leg"),
-                   tags$details(class = "tabla-vista", tags$summary("Ver como tabla"), uiOutput("tab_leg_vista")))),
+                   tags$details(class = "tabla-vista", ontoggle = "Shiny.setInputValue('ver_tabla', this.open)", tags$summary("Ver como tabla"), uiOutput("tab_leg_vista")))),
     div(class = "nota",
         "Una persona cuenta una vez por legislatura y lema. No son bancas: incluye a titulares y suplentes tal como",
         "figuran en la fuente, y la fuente no dice cuántas veces un suplente llegó a ocupar la banca."),
@@ -152,23 +152,23 @@ server <- function(input, output, session) {
 
   output$detalle <- renderUI({
     cp <- CP(); tp <- TP()
-    filas_c <- lapply(seq_len(nrow(cp)), function(i) { x <- cp[i, ]
-      tags$tr(tags$td(class = "per", periodo_txt(x$desde, x$hasta, x$en_actividad)), tags$td(x$cargo), tags$td(x$condicion),
-              tags$td(x$circunscripcion),
-              tags$td(if (!is.na(x$lema)) tags$span(class = "ley", tags$i(class = paste("pto", cl_lema(x$ranura))), x$lema) else "—"),
-              tags$td(x$sublema), tags$td(x$lista)) })
     paneles <- list(accordion_panel(
       title = tagList("Cargos legislativos", tags$span(class = "n-sec", nrow(cp))), value = "Cargos legislativos",
-      tabla_simple(c("Período", "Cargo", "Condición", "Circunscripción", "Lema", "Sublema", "Lista"), filas_c)))
+      tabla_html(c("Período", "Cargo", "Condición", "Circunscripción", "Lema", "Sublema", "Lista"),
+        list(escna(periodo_txt(cp$desde, cp$hasta, cp$en_actividad)), escna(cp$cargo), escna(cp$condicion),
+             escna(cp$circunscripcion), lema_html(cp$ranura, cp$lema), escna(cp$sublema), escna(cp$lista)),
+        clases = c("per", rep(NA_character_, 6)))))
     for (s in meta$secciones) {
       d <- tp[tp$seccion == s, ]; if (!nrow(d)) next
-      filas <- lapply(seq_len(nrow(d)), function(i) { x <- d[i, ]
-        tags$tr(tags$td(class = "per", periodo_txt(x$desde, x$hasta, x$en_actividad, x$periodo_raw)),
-                tags$td(x$titulo), tags$td(x$detalle),
-                if (s == "Actividad política") tags$td(paste(na.omit(c(x$lema, x$sector)), collapse = " · "))) })
-      cab <- c("Período", "Descripción", "Detalle", if (s == "Actividad política") "Lema · sector")
+      cols <- list(escna(periodo_txt(d$desde, d$hasta, d$en_actividad, d$periodo_raw)), escna(d$titulo), escna(d$detalle))
+      cab <- c("Período", "Descripción", "Detalle")
+      if (s == "Actividad política") {
+        cab <- c(cab, "Lema · sector")
+        cols <- c(cols, list(escna(ifelse(is.na(d$lema), d$sector, ifelse(is.na(d$sector), d$lema, paste(d$lema, d$sector, sep = " · "))))))
+      }
       paneles <- c(paneles, list(accordion_panel(
-        title = tagList(s, tags$span(class = "n-sec", nrow(d))), value = s, tabla_simple(cab, filas))))
+        title = tagList(s, tags$span(class = "n-sec", nrow(d))), value = s,
+        tabla_html(cab, cols, clases = c("per", rep(NA_character_, length(cols) - 1))))))
     }
     do.call(accordion, c(list(id = "acc", open = "Cargos legislativos", multiple = TRUE), paneles))
   })
@@ -186,11 +186,13 @@ server <- function(input, output, session) {
   output$ley_leg <- renderUI({ r <- sort(unique(cuentas()$ranura)); r <- c(r[r %in% 1:9], r[r == 0])
     leyenda_lemas(r, nombre_ranura(r)) })
   output$tab_leg_vista <- renderUI({
+    req(isTRUE(input$ver_tabla))                       # sólo se calcula cuando se abre el desplegable
     cu <- cuentas(); r <- c(1:9, 0); r <- r[r %in% cu$ranura]
-    filas <- lapply(rev(legs$numero), function(l) { x <- cu[cu$leg == l, ]; L <- legs[legs$numero == l, ]
-      tags$tr(tags$td(sprintf("%d (%d–%d)", l, L$desde, L$hasta)), tags$td(fmt_n(sum(x$n))),
-              lapply(r, function(k) tags$td(fmt_n(sum(x$n[x$ranura == k]))))) })
-    tabla_simple(c("Legislatura", "Total", nombre_ranura(r)), filas)
+    M <- vapply(r, function(k) { v <- numeric(nrow(legs)); i <- cu$ranura == k; v[match(cu$leg[i], legs$numero)] <- cu$n[i]; v }, numeric(nrow(legs)))
+    M <- matrix(M, nrow = nrow(legs)); o <- rev(seq_len(nrow(legs)))
+    tabla_html(c("Legislatura", "Total", nombre_ranura(r)),
+      c(list(sprintf("%d (%d–%d)", legs$numero, legs$desde, legs$hasta)[o], fmt_n(rowSums(M))[o]),
+        lapply(seq_along(r), function(j) fmt_n(M[o, j]))))
   })
   observeEvent(input$leg_click, updateSelectInput(session, "leg", selected = input$leg_click))
 
@@ -203,12 +205,9 @@ server <- function(input, output, session) {
       lema = paste(unique(na.omit(lema)), collapse = " / "), circ = paste(unique(na.omit(circunscripcion)), collapse = ", "),
       cam = first(camara), r = first(ranura), .groups = "drop") |>
       left_join(personas |> select(id, nombre_busq), by = "id") |> arrange(cam, nombre_busq)
-    filas <- lapply(seq_len(nrow(g)), function(i) { x <- g[i, ]
-      tags$tr(tags$td(persona_link(x$id, x$nombre_busq)), tags$td(x$cargo),
-              tags$td(if (nzchar(x$lema)) tags$span(class = "ley", tags$i(class = paste("pto", cl_lema(x$r))), x$lema) else "—"),
-              tags$td(x$circ)) })
     tagList(h2(sprintf("Legislatura %d (%d–%d): %s personas", L, LL$desde, LL$hasta, fmt_n(nrow(g))), class = "h5"),
-            tabla_simple(c("Persona", "Cargo", "Lema", "Circunscripción"), filas))
+            tabla_html(c("Persona", "Cargo", "Lema", "Circunscripción"),
+                       list(plink_html(g$id, g$nombre_busq), escna(g$cargo), lema_html(g$r, g$lema), escna(g$circ))))
   })
 
   # ---- Recorridos ----
@@ -230,7 +229,6 @@ server <- function(input, output, session) {
   output$caso_ui <- renderUI({
     k <- input$caso; cs <- meta$casos[meta$casos$tipo == k, ] |>
       left_join(personas |> select(id, nombre_busq), by = "id") |> arrange(nombre_busq)
-    filas <- lapply(seq_len(nrow(cs)), function(i) tags$tr(tags$td(persona_link(cs$id[i], cs$nombre_busq[i])), tags$td(cs$trayecto[i])))
     pie <- switch(k,
       lema = "Se cuenta un cambio cuando dos cargos consecutivos de la misma persona tienen lemas distintos. No registra cambios de sector o sublema dentro de un mismo lema, ni candidaturas, ni afiliaciones sin cargo.",
       circunscripcion = "Diputados que figuran por más de un departamento a lo largo de sus cargos. Un cambio de circunscripción no implica un cambio de residencia.",
@@ -242,7 +240,7 @@ server <- function(input, output, session) {
         transiciones_top(meta$trans),
         tags$details(class = "tabla-vista", tags$summary("Ver la matriz completa"), matriz_lemas(meta$trans))),
       div(class = "nota", pie),
-      tabla_simple(c("Persona", "Trayecto"), filas))
+      tabla_html(c("Persona", "Trayecto"), list(plink_html(cs$id, cs$nombre_busq), escna(cs$trayecto))))
   })
 
   # ---- Buscar en el texto ----
@@ -268,11 +266,11 @@ server <- function(input, output, session) {
   output$tabla_busq <- renderUI({
     h <- hallazgos(); if (is.null(h) || !nrow(h)) return(NULL)
     h <- head(h, 200)
-    filas <- lapply(seq_len(nrow(h)), function(i) { x <- h[i, ]
-      tags$tr(tags$td(persona_link(x$id, x$nombre_busq)), tags$td(tags$span(class = "sec", x$seccion)),
-              tags$td(class = "per", periodo_txt(x$desde, x$hasta, x$en_actividad, x$periodo_raw)),
-              tags$td(x$titulo, if (!is.na(x$detalle)) tags$span(class = "tenue", paste0(" — ", x$detalle)))) })
-    tabla_simple(c("Persona", "Sección", "Período", "Texto"), filas)
+    tabla_html(c("Persona", "Sección", "Período", "Texto"),
+      list(plink_html(h$id, h$nombre_busq), paste0('<span class="sec">', esc(h$seccion), "</span>"),
+           escna(periodo_txt(h$desde, h$hasta, h$en_actividad, h$periodo_raw)),
+           paste0(escna(h$titulo), ifelse(is.na(h$detalle), "", paste0('<span class="tenue"> — ', esc(h$detalle), "</span>")))),
+      clases = c(NA_character_, NA_character_, "per", NA_character_))
   })
   output$bajar <- downloadHandler(
     filename = function() "busqueda_trayectorias.csv",
